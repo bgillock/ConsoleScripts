@@ -1,0 +1,5 @@
+#4.0# 1 "b4" 3 %0000000000000000 1                                                                                             
+/config/dp48 %0011 0 AESB
+/config/dp48/assign 11 11 0 8 1 3 0 0 0 2 4 9 6 7 5 5 10 10 10 10 10 10 10 10 0 0 0 0 11 0 0 0 0 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0
+/config/dp48/link 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0
+/config/dp48/grpname "Acoustic" "Loretta" "David" "Keys" "Jarod" "Electric" "Bass" "Corey" "AcGtr 2" "Drums" "Nicole" "Talkback"
