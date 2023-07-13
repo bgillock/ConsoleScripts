@@ -64,6 +64,8 @@ const ConsoleColor = {
     CY: "color:green;background-color:black",
     CYi: "background-color:green;color:black",
 }
+const ChannelType = [ 'ch', 'bus', 'fxrtn', 'mtx','auxin' ]
+
 function loadFile1(contents) {
     var file1Lines = contents.split('\n')
         // Save in dictionary keyed by first field
@@ -85,11 +87,7 @@ function getParamTuples(sceneline) {
     if (fields == null) return [linetype, tracknum, paramgroup, tuples]
     var path=fields[0].split('/')
 
-    if ((path[1] == 'ch') || 
-        (path[1] == 'bus') || 
-             (path[1] == 'fxrtn') ||
-             (path[1] == 'mtx') || 
-             (path[1] == 'auxin')) {
+    if (ChannelType.includes(path[1])) {
         var params = ParamMeta[path[3]]
         paramgroup = path[3]
         if (path.length == 5) {
@@ -106,6 +104,7 @@ function getParamTuples(sceneline) {
             for (var p=0;p<fields.length-1;p++) {
                 tuples.push([params[p],fields[p+1].replace(/['"]+/g, '')])
             }
+
             linetype = path[1]
             tracknum = path[2]
         }
@@ -134,12 +133,7 @@ function loadFile2(contents) {
         var [linetype1, tracknum1, paramgroup1, params1] = getParamTuples(file1Dict[key])
         var [linetype2, tracknum2, paramgroup2, params2] = getParamTuples(file2Dict[key])
         if (params1.length != params2.length) continue
-        if ((params1.length > 0) && 
-            ((linetype1 == 'ch') || 
-             (linetype1 == 'bus') || 
-             (linetype1 == 'fxrtn') ||
-             (linetype1 == 'mtx') || 
-             (linetype1 == 'auxin')) ) {
+        if (params1.length > 0){
             if (paramgroup1 == "config") {
                 channelName = "<td>"+linetype1+"</td><td>"+params2[0][1]+"</td>"
                 channelColor = ConsoleColor[params2[2][1]]
