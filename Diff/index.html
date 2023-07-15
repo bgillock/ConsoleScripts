@@ -40,6 +40,7 @@ var file2Name = ""
 */
 const ParamMeta = {
     config: ["Name","Icon","Color","Source"],
+    headamp: ["Gain","48v"],
     preamp: ["P1","P2","P3","P4","LowCut"],
     delay: ["On/Off","Time"],
     gate: ["On/Off","Type","Threshold","Range","Attack","Hold","Release"],
@@ -93,11 +94,7 @@ function TranslateNumberToName(linetype, group) {
 
 function loadFile1(contents) {
     var file1Lines = contents.split('\n')
-        // Save in dictionary keyed by first field
-    for (var l=0;l<file1Lines.length;l++) {
-        var fields=file1Lines[l].match(/(?:[^\s"']+|['"][^'"]*["'])+/g) // space delimited with quoted strings containing spaces
-        if (fields != null) file1Dict[fields[0]] = file1Lines[l]
-    }
+    file1Dict = GetFullParamDict(file1Lines)
     file1Name = file1Lines[0].split('\"')[1]
     document.getElementById('file1button').setAttribute("width",file1Name.length*10)
     document.getElementById('file1button').textContent=file1Name
@@ -137,13 +134,34 @@ function getParamTuples(sceneline) {
     }
     return [linetype, tracknum, paramgroup, tuples]
 }
+function GetFullParamDict(fileLines) {
+    var Headamp2 = {}
+    var fileDict = {}
+    for (var l=0;l<fileLines.length;l++) {
+        fields = fileLines[l].match(/(?:[^\s"']+|['"][^'"]*["'])+/g) // space delimited with quoted strings containing spaces
+        if ((fields != null) && (fields[0].split('/')[1] == 'headamp')) {
+            var key = fields[0].split('/')[2]
+            Headamp2[key] = {Gain: fields[1], Phantom: fields[2]}
+        }
+    }
+
+    // Save in dictionary keyed by first field
+    for (var l=0;l<fileLines.length;l++) {
+        var fields=fileLines[l].match(/(?:[^\s"']+|['"][^'"]*["'])+/g) // space delimited with quoted strings containing spaces        
+        if (fields != null) fileDict[fields[0]] = fileLines[l]
+        var [linetype2, tracknum2, paramgroup2, params2] = getParamTuples(fileLines[l])
+        if ((linetype2 == 'ch') && (paramgroup2 == 'config')) 
+        {
+            var key = '/ch/'+tracknum2+'/headamp'
+            fileDict[key] = key + ' ' + Headamp2[params2[3][1].padStart(3,'0')].Gain + ' ' + Headamp2[params2[3][1].padStart(3,'0')].Phantom
+        }
+    }
+    return fileDict
+}
 function loadFile2(contents) {
     var file2Lines = contents.split('\n')
-    // Save in dictionary keyed by first field
-    for (var l=0;l<file2Lines.length;l++) {
-        var fields=file2Lines[l].match(/(?:[^\s"']+|['"][^'"]*["'])+/g) // space delimited with quoted strings containing spaces
-        if (fields != null) file2Dict[fields[0]] = file2Lines[l]
-    }
+    file2Dict = GetFullParamDict(file2Lines)
+
     file2Name = file2Lines[0].split('\"')[1]
     document.getElementById('file2button').setAttribute("width",file2Name.length*10)
     document.getElementById('file2button').textContent=file2Name
@@ -159,7 +177,9 @@ function loadFile2(contents) {
     AuxNames = {}
     FxRtnNames = {}
     MtxNames = {}
+    Headamp2 = {}
 
+    // Fill dictionaries
     for (const key in file2Dict) {
         var [linetype2, tracknum2, paramgroup2, params2] = getParamTuples(file2Dict[key])
         if (paramgroup2 == "config") {
@@ -172,7 +192,6 @@ function loadFile2(contents) {
     }
 
     for (const key in file2Dict) {
- 
         var [linetype1, tracknum1, paramgroup1, params1] = getParamTuples(file1Dict[key])
         var [linetype2, tracknum2, paramgroup2, params2] = getParamTuples(file2Dict[key])
         if (params1.length != params2.length) continue
