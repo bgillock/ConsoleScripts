@@ -66,6 +66,31 @@ const ConsoleColor = {
 }
 const ChannelType = [ 'ch', 'bus', 'fxrtn', 'mtx','auxin' ]
 
+var ChannelNames = {}
+var BusNames = {}
+var AuxNames = {}
+var FxRtnNames = {}
+var MtxNames = {}
+
+function TranslateNumberToName(linetype, group) {
+    var name = group
+    if ((linetype == 'ch') || (linetype == 'auxin') || (linetype == 'fxrtn')) {
+        if (group.includes('mix/')) {
+            if (group.split('/')[1] in BusNames) {
+                name = "mix/"+BusNames[group.split('/')[1]]
+            }
+        }
+    }
+    if (linetype == 'bus') {
+        if (group.includes('mix/')) {
+            if (group.split('/')[1] in MtxNames) {
+                name = "mix/"+MtxNames[group.split('/')[1]]
+            }
+        }
+    }
+    return name
+}
+
 function loadFile1(contents) {
     var file1Lines = contents.split('\n')
         // Save in dictionary keyed by first field
@@ -77,6 +102,7 @@ function loadFile1(contents) {
     document.getElementById('file1button').setAttribute("width",file1Name.length*10)
     document.getElementById('file1button').textContent=file1Name
 }
+
 function getParamTuples(sceneline) {
     var tuples = []
     var linetype = ""
@@ -122,11 +148,28 @@ function loadFile2(contents) {
     document.getElementById('file2button').setAttribute("width",file2Name.length*10)
     document.getElementById('file2button').textContent=file2Name
     var htmlout = ""
-    htmlout="Before N Lines = "+String(file1Dict.length)+", After N Lines = "+String(file2Dict.length)+'\n'
-    htmlout+="<table><tr><th>Type</th><th>Name</th><th>Group</th><th>Param</th><th>Before</th><th>After</th></tr>"
+    htmlout="Before N Lines = "+String(Object.keys(file1Dict).length)+", After N Lines = "+String(Object.keys(file2Dict).length)+'\n' 
 
+    var OutTable = []
     var channelName = "No Channel Name"
     var channelColor = ""
+    
+    ChannelNames = {}
+    BusNames = {}
+    AuxNames = {}
+    FxRtnNames = {}
+    MtxNames = {}
+
+    for (const key in file2Dict) {
+        var [linetype2, tracknum2, paramgroup2, params2] = getParamTuples(file2Dict[key])
+        if (paramgroup2 == "config") {
+            if (linetype2 == 'ch') ChannelNames[tracknum2] = params2[0][1]
+            if (linetype2 == 'bus') BusNames[tracknum2] = params2[0][1]
+            if (linetype2 == 'auxin') AuxNames[tracknum2] = params2[0][1]
+            if (linetype2 == 'fxrtn') FxRtnNames[tracknum2] = params2[0][1]
+            if (linetype2 == 'mtx') BusNames[tracknum2] = params2[0][1]
+        }
+    }
 
     for (const key in file2Dict) {
  
@@ -135,18 +178,36 @@ function loadFile2(contents) {
         if (params1.length != params2.length) continue
         if (params1.length > 0){
             if (paramgroup1 == "config") {
-                channelName = "<td>"+linetype1+"</td><td>"+params2[0][1]+"</td>"
+                channelName = params2[0][1]
                 channelColor = ConsoleColor[params2[2][1]]
             }
             for (var p=0;p<params1.length;p++) {
                 if (params1[p][1] != params2[p][1])
                 {
-                    htmlout+='<tr style=\"'+channelColor+'\">'+
-                        channelName+'<td>'+paramgroup1+'</td>'+
-                            '<td>'+params1[p][0]+'</td><td>'+params1[p][1]+'</td><td>'+params2[p][1]+'</td></tr>\n'
+                    var row = {
+                        Type: linetype1, 
+                        Color: channelColor, 
+                        Name: channelName, 
+                        Group: TranslateNumberToName(linetype1,paramgroup1), 
+                        Param: params1[p][0],
+                        Before: params1[p][1],
+                        After: params2[p][1]
+                    }
+                    OutTable.push(row)
                 }
             }
         }     
+    }
+
+    htmlout+="<table><tr><th>Type</th><th>Name</th><th>Group</th><th>Param</th><th>Before</th><th>After</th></tr>"
+    for (var r=0;r<OutTable.length;r++) {
+        htmlout+='<tr style=\"'+OutTable[r].Color+'\">'+
+                        '<td>'+OutTable[r].Type+'</td>'+
+                        '<td>'+OutTable[r].Name+'</td>'+
+                        '<td>'+OutTable[r].Group+'</td>'+
+                        '<td>'+OutTable[r].Param+'</td>'+
+                        '<td>'+OutTable[r].Before+'</td>'+
+                        '<td>'+OutTable[r].After+'</td></tr>\n'
     }
     htmlout+="</table>"
     document.getElementById('contents').innerHTML = htmlout;
