@@ -130,12 +130,7 @@ function showDiff()
     document.getElementById('file2button').setAttribute("width",file2Name.length*10)
     document.getElementById('file2button').textContent=file2Name
 
-    ChannelType = []
-    if (document.getElementById('channels').checked) ChannelType.push('ch')
-    if (document.getElementById('busses').checked) ChannelType.push('bus')
-    if (document.getElementById('auxins').checked) ChannelType.push('auxin')
-    if (document.getElementById('fxrtns').checked) ChannelType.push('fxrtn')
-    if (document.getElementById('mtxs').checked) ChannelType.push('mtx')
+   
 
     var htmlout = ""
     htmlout="Before N Lines = "+String(Object.keys(file1Dict).length)+", After N Lines = "+String(Object.keys(file2Dict).length)+'\n' 
@@ -162,10 +157,18 @@ function showDiff()
         }
     }
 
+    var ShowType = []
+    if (document.getElementById('channels').checked) ShowType.push('ch')
+    if (document.getElementById('busses').checked) ShowType.push('bus')
+    if (document.getElementById('auxins').checked) ShowType.push('auxin')
+    if (document.getElementById('fxrtns').checked) ShowType.push('fxrtn')
+    if (document.getElementById('mtxs').checked) ShowType.push('mtx')
+
     for (const key in file2Dict) {
         var [linetype1, tracknum1, paramgroup1, params1] = getParamTuples(file1Dict[key])
         var [linetype2, tracknum2, paramgroup2, params2] = getParamTuples(file2Dict[key])
         if (params1.length != params2.length) continue
+        if (!ShowType.includes(linetype1)) continue
         if (params1.length > 0){
             if (paramgroup1 == "config") {
                 channelName = params2[0][1]
