@@ -1,9 +1,13 @@
-const http = require('http')
-const fs = require('fs')
+const http = require('http');
 
-const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'content-type': 'text/html' })
-  fs.createReadStream('index.html').pipe(res)
-})
+const finalhandler = require('finalhandler');
+const serveStatic = require('serve-static');
+
+var serve = serveStatic("./");
+
+var server = http.createServer(function(req, res) {
+  var done = finalhandler(req, res);
+  serve(req, res, done);
+});
 
 server.listen(process.env.PORT || 8080)
